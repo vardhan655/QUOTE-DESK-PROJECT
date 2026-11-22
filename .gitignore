@@ -1,0 +1,28 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local database & temp files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite3
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE & OS metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

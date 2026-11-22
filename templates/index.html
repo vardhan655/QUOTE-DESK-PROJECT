@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Quote Desk RFQs{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Hero / Metrics Section -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total RFQs -->
+        <a href="{{ url_for('index', status='all') }}" class="block p-5 bg-white rounded-2xl border border-slate-200 shadow-sm hover:border-slate-300 transition group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total RFQs</p>
+                    <p class="text-3xl font-extrabold text-slate-900 mt-1">{{ metrics.total }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-3 flex items-center">
+                <span>View all procurement requests</span>
+            </p>
+        </a>
+
+        <!-- Open Status -->
+        <a href="{{ url_for('index', status='Open') }}" class="block p-5 bg-white rounded-2xl border border-sky-100 shadow-sm hover:border-sky-300 transition group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-sky-600 uppercase tracking-wider">Open</p>
+                    <p class="text-3xl font-extrabold text-sky-900 mt-1">{{ metrics.open }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center text-sky-600 group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <p class="text-xs text-sky-600/80 mt-3">0 quotes &bull; Deadline active</p>
+        </a>
+
+        <!-- Quoted Status -->
+        <a href="{{ url_for('index', status='Quoted') }}" class="block p-5 bg-white rounded-2xl border border-emerald-100 shadow-sm hover:border-emerald-300 transition group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Quoted</p>
+                    <p class="text-3xl font-extrabold text-emerald-900 mt-1">{{ metrics.quoted }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <p class="text-xs text-emerald-600/80 mt-3">&ge;1 valid quote &bull; Ready to order</p>
+        </a>
+
+        <!-- Expired Status -->
+        <a href="{{ url_for('index', status='Expired') }}" class="block p-5 bg-white rounded-2xl border border-rose-100 shadow-sm hover:border-rose-300 transition group">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Expired</p>
+                    <p class="text-3xl font-extrabold text-rose-900 mt-1">{{ metrics.expired }}</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <p class="text-xs text-rose-600/80 mt-3">Past deadline or all quotes expired</p>
+        </a>
+    </div>
+
+    <!-- Filter and Search Header -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+        <!-- Status Tabs -->
+        <div class="flex items-center space-x-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
+            <a href="{{ url_for('index', status='all', q=search_query) }}" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition {{ 'bg-white text-slate-900 shadow-sm' if current_filter == 'All' else 'text-slate-600 hover:text-slate-900' }}">
+                All ({{ metrics.total }})
+            </a>
+            <a href="{{ url_for('index', status='Open', q=search_query) }}" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition {{ 'bg-white text-sky-700 shadow-sm' if current_filter == 'Open' else 'text-slate-600 hover:text-slate-900' }}">
+                Open ({{ metrics.open }})
+            </a>
+            <a href="{{ url_for('index', status='Quoted', q=search_query) }}" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition {{ 'bg-white text-emerald-700 shadow-sm' if current_filter == 'Quoted' else 'text-slate-600 hover:text-slate-900' }}">
+                Quoted ({{ metrics.quoted }})
+            </a>
+            <a href="{{ url_for('index', status='Expired', q=search_query) }}" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg transition {{ 'bg-white text-rose-700 shadow-sm' if current_filter == 'Expired' else 'text-slate-600 hover:text-slate-900' }}">
+                Expired ({{ metrics.expired }})
+            </a>
+        </div>
+
+        <!-- Search Form -->
+        <form method="GET" action="{{ url_for('index') }}" class="flex items-center space-x-2 w-full sm:w-80">
+            <input type="hidden" name="status" value="{{ current_filter }}">
+            <div class="relative w-full">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </div>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search part # or description..." class="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50 focus:bg-white transition">
+            </div>
+            {% if search_query %}
+                <a href="{{ url_for('index', status=current_filter) }}" class="text-xs text-slate-500 hover:text-slate-800 whitespace-nowrap px-2 py-1">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- RFQ Table Card -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h2 class="text-base font-semibold text-slate-800">Aerospace Requests for Quotation</h2>
+                <p class="text-xs text-slate-500">Showing {{ rfqs|length }} request(s) matching criteria</p>
+            </div>
+            <button onclick="openCreateModal()" class="text-xs font-semibold text-sky-600 hover:text-sky-800 flex items-center space-x-1">
+                <span>+ Create Another RFQ</span>
+            </button>
+        </div>
+
+        {% if rfqs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        <th class="py-3 px-6">Part Details</th>
+                        <th class="py-3 px-4 text-center">Qty</th>
+                        <th class="py-3 px-4">Needed By</th>
+                        <th class="py-3 px-4 text-center">Status</th>
+                        <th class="py-3 px-6">Best Quote Spotlight</th>
+                        <th class="py-3 px-6 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for rfq in rfqs %}
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <!-- Part Info -->
+                        <td class="py-4 px-6">
+                            <div class="font-mono font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
+                                <a href="{{ url_for('rfq_detail', rfq_id=rfq.id) }}" class="hover:underline">
+                                    {{ rfq.part_number }}
+                                </a>
+                            </div>
+                            <div class="text-xs text-slate-500 line-clamp-1 max-w-xs mt-0.5" title="{{ rfq.description }}">
+                                {{ rfq.description }}
+                            </div>
+                        </td>
+
+                        <!-- Quantity -->
+                        <td class="py-4 px-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 font-mono">
+                                {{ rfq.quantity }}
+                            </span>
+                        </td>
+
+                        <!-- Needed By -->
+                        <td class="py-4 px-4">
+                            <div class="font-medium text-slate-800">{{ rfq.needed_by|human_date }}</div>
+                            <div class="text-xs mt-0.5">
+                                {% if rfq.days_remaining > 0 %}
+                                    <span class="text-emerald-600 font-medium">in {{ rfq.days_remaining }} day(s)</span>
+                                {% elif rfq.days_remaining == 0 %}
+                                    <span class="text-amber-600 font-semibold">Today (due date)</span>
+                                {% else %}
+                                    <span class="text-rose-600 font-medium">{{ (-rfq.days_remaining) }} day(s) overdue</span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td class="py-4 px-4 text-center">
+                            {% if rfq.status == 'Open' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5"></span>
+                                    Open
+                                </span>
+                            {% elif rfq.status == 'Quoted' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                    Quoted
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                                    Expired
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Best Quote Spotlight -->
+                        <td class="py-4 px-6">
+                            {% if rfq.best_quote %}
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wider uppercase border border-emerald-300">
+                                        ★ Best
+                                    </span>
+                                    <div>
+                                        <div class="font-semibold text-slate-800 text-xs">
+                                            {{ rfq.best_quote.supplier_name }}
+                                        </div>
+                                        <div class="text-xs text-slate-500">
+                                            <span class="font-bold text-slate-900">{{ rfq.best_quote.unit_price|inr }}</span> / unit &bull; {{ rfq.best_quote.lead_time_days }}d lead
+                                        </div>
+                                    </div>
+                                </div>
+                            {% elif rfq.quote_count > 0 %}
+                                <div class="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200 inline-block">
+                                    {{ rfq.quote_count }} quote(s) &bull; None qualify
+                                </div>
+                            {% else %}
+                                <span class="text-xs text-slate-400 italic">0 quotes submitted</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Action -->
+                        <td class="py-4 px-6 text-right">
+                            <a href="{{ url_for('rfq_detail', rfq_id=rfq.id) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-lg text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-900 transition">
+                                Manage ({{ rfq.quote_count }}) &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="py-16 text-center">
+            <div class="w-16 h-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="text-base font-semibold text-slate-800">No RFQs found</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                {% if search_query or current_filter != 'All' %}
+                    No requests match your filter criteria. Try clearing search or selecting a different status.
+                {% else %}
+                    No RFQs exist in the database yet. Create your first RFQ to get started.
+                {% endif %}
+            </p>
+            <div class="mt-4">
+                <button onclick="openCreateModal()" class="inline-flex items-center px-4 py-2 text-xs font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-500 shadow-sm transition">
+                    + Create First RFQ
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

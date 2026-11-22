@@ -1,0 +1,22 @@
+/* Quote Desk Custom Enhancements */
+
+/* Smooth transitions */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Card hover glow */
+.group:hover .group-hover\:scale-105 {
+    transform: scale(1.05);
+}
+
+/* Monospace font styling for parts and currencies */
+.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Responsive table styling */
+table {
+    border-spacing: 0;
+}

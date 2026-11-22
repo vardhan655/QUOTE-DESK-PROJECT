@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}{{ rfq.part_number }} | RFQ Detail | Quote Desk{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Breadcrumb & Back Navigation -->
+    <div class="flex items-center justify-between">
+        <a href="{{ url_for('index') }}" class="inline-flex items-center text-xs font-semibold text-sky-600 hover:text-sky-800 transition">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Dashboard
+        </a>
+        <div class="flex items-center space-x-2">
+            <span class="text-xs text-slate-400">RFQ ID: #{{ rfq.id }}</span>
+            <form action="{{ url_for('delete_rfq_action', rfq_id=rfq.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete RFQ {{ rfq.part_number }} and all associated quotes?');" class="inline">
+                <button type="submit" class="text-xs text-rose-500 hover:text-rose-700 hover:underline">
+                    Delete RFQ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- RFQ Overview Card -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+            <div>
+                <div class="flex items-center space-x-3">
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tracking-tight">{{ rfq.part_number }}</h1>
+                    <!-- Status Badge -->
+                    {% if rfq.status == 'Open' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5 animate-pulse"></span>
+                            Open (Awaiting Quotes)
+                        </span>
+                    {% elif rfq.status == 'Quoted' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                            Quoted (Active)
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                            Expired
+                        </span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-slate-600 mt-2 max-w-3xl leading-relaxed">{{ rfq.description }}</p>
+            </div>
+
+            <!-- RFQ Core Specs Pills -->
+            <div class="flex flex-wrap lg:flex-nowrap items-center gap-3">
+                <!-- Quantity -->
+                <div class="px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-center min-w-[100px]">
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Required Qty</span>
+                    <span class="text-lg font-bold text-slate-900 font-mono" id="rfqQuantityDisplay">{{ rfq.quantity }}</span>
+                    <span class="text-[10px] text-slate-400 block">units</span>
+                </div>
+                <!-- Needed By Deadline -->
+                <div class="px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-center min-w-[130px]">
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Needed By Date</span>
+                    <span class="text-sm font-bold text-slate-900 block mt-0.5" id="rfqNeededByDisplay">{{ rfq.needed_by|human_date }}</span>
+                    <span class="text-[10px] font-medium block
+                        {% if rfq.days_remaining > 0 %} text-emerald-600
+                        {% elif rfq.days_remaining == 0 %} text-amber-600 font-bold
+                        {% else %} text-rose-600
+                        {% endif %}">
+                        {% if rfq.days_remaining > 0 %} in {{ rfq.days_remaining }} day(s)
+                        {% elif rfq.days_remaining == 0 %} Due Today
+                        {% else %} Overdue by {{ -rfq.days_remaining }} day(s)
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 flex flex-wrap items-center justify-between text-xs text-slate-500">
+            <div>
+                Created on: <span class="font-medium text-slate-700">{{ rfq.created_at[:10]|human_date }}</span>
+            </div>
+            <div>
+                Today's Reference Date: <span class="font-mono font-medium text-slate-700">{{ today|human_date }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Quote Spotlight Banner -->
+    {% if best_quote %}
+    <div class="bg-gradient-to-r from-emerald-900 via-slate-900 to-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-lg border-2 border-emerald-500 relative overflow-hidden">
+        <!-- Background decorative badge -->
+        <div class="absolute -right-6 -bottom-6 text-emerald-500/10 pointer-events-none">
+            <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+            <div>
+                <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider mb-2">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    <span>Recommended Winning Quote</span>
+                </div>
+                <h2 class="text-2xl font-bold text-white flex items-center space-x-2">
+                    <span>{{ best_quote.supplier_name }}</span>
+                </h2>
+                <p class="text-xs text-emerald-200/90 mt-1">
+                    ✓ Valid through {{ best_quote.valid_until|human_date }} &bull; 
+                    ✓ On-Time Arrival (Lead time: {{ best_quote.lead_time_days }} days &bull; Est. Delivery: {{ best_quote.arrival_date|human_date }}) &bull;
+                    ✓ Lowest Qualifying Unit Price
+                </p>
+            </div>
+
+            <!-- Price Highlights -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 text-right">
+                <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-300">Winning Unit Price</span>
+                <span class="text-2xl font-extrabold text-white font-mono">{{ best_quote.unit_price|inr }}</span>
+                <div class="text-xs text-slate-300 mt-1">
+                    Total Order: <span class="font-bold text-white font-mono">{{ best_quote.total_price|inr }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif total_quotes > 0 %}
+    <!-- Alert: Quotes exist but none meet deadline or validity -->
+    <div class="bg-amber-50 border-l-4 border-amber-500 rounded-r-2xl p-5 shadow-sm">
+        <div class="flex items-start space-x-3">
+            <div class="p-1 text-amber-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-amber-800">Notice: No Quotes Qualify as "Best Quote"</h3>
+                <p class="text-xs text-amber-700 mt-1 leading-relaxed">
+                    This RFQ has received <strong>{{ total_quotes }} supplier quote(s)</strong>, but <strong>none</strong> meet both the delivery deadline (<span class="font-semibold">{{ rfq.needed_by|human_date }}</span>) and current validity period. Review the disqualification details for each supplier in the table below.
+                </p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- No quotes yet -->
+    <div class="bg-sky-50 border border-sky-200 rounded-2xl p-5 text-sky-800 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-sky-100 rounded-lg text-sky-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <h4 class="text-sm font-semibold">No Quotes Received Yet</h4>
+                <p class="text-xs text-sky-600 mt-0.5">This RFQ is currently open and waiting for supplier submissions. Use the quote form to submit bids.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Grid: Quotes Table (Left) + Add Quote Form (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- Left Column: Supplier Quotes Table (8 cols on lg) -->
+        <div class="lg:col-span-7 xl:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h2 class="text-base font-semibold text-slate-800">Supplier Quotes ({{ quotes|length }})</h2>
+                    <p class="text-xs text-slate-500">Sorted by Unit Price (lowest first) with strict delivery & validity screening</p>
+                </div>
+            </div>
+
+            {% if quotes %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <th class="py-3 px-4">Supplier & Status</th>
+                            <th class="py-3 px-4 text-right">Unit Price</th>
+                            <th class="py-3 px-4 text-right">Total Price</th>
+                            <th class="py-3 px-4">Lead Time & Arrival</th>
+                            <th class="py-3 px-4">Valid Until</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for q in quotes %}
+                        <tr class="transition-colors {% if q.is_best %} bg-emerald-50/70 hover:bg-emerald-50 border-l-4 border-emerald-500 {% elif not q.is_eligible %} bg-slate-50/50 opacity-80 hover:opacity-100 {% else %} hover:bg-slate-50 {% endif %}">
+                            <!-- Supplier & Eligibility -->
+                            <td class="py-4 px-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-slate-900">{{ q.supplier_name }}</span>
+                                    {% if q.is_best %}
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                                            ★ BEST
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-1">
+                                    {% if q.is_eligible %}
+                                        <span class="inline-flex items-center text-[11px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-200">
+                                            ✓ Eligible (On-Time & Valid)
+                                        </span>
+                                    {% else %}
+                                        <div class="space-y-0.5">
+                                            {% for reason in q.disqualification_reasons %}
+                                                <div class="text-[11px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 inline-block font-medium">
+                                                    ✗ {{ reason }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            <!-- Unit Price -->
+                            <td class="py-4 px-4 text-right whitespace-nowrap">
+                                <span class="font-bold font-mono text-slate-900 {% if q.is_best %} text-emerald-800 text-base {% endif %}">
+                                    {{ q.unit_price|inr }}
+                                </span>
+                            </td>
+
+                            <!-- Total Price -->
+                            <td class="py-4 px-4 text-right whitespace-nowrap">
+                                <span class="font-bold font-mono text-slate-800">
+                                    {{ q.total_price|inr }}
+                                </span>
+                                <span class="block text-[10px] text-slate-400">for {{ rfq.quantity }} units</span>
+                            </td>
+
+                            <!-- Lead Time & Arrival Date -->
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <div class="font-semibold text-slate-800">{{ q.lead_time_days }} day(s)</div>
+                                <div class="text-xs text-slate-500">
+                                    Est. <span class="font-medium text-slate-700">{{ q.arrival_date|human_date }}</span>
+                                </div>
+                            </td>
+
+                            <!-- Valid Until -->
+                            <td class="py-4 px-4 whitespace-nowrap">
+                                <div class="text-xs font-medium text-slate-800">{{ q.valid_until|human_date }}</div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="py-12 text-center text-slate-400 text-sm">
+                No quotes submitted yet for this RFQ.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Submit Supplier Quote Form (5 cols on lg) -->
+        <div class="lg:col-span-5 xl:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-24">
+            <div class="flex items-center space-x-2 pb-4 border-b border-slate-100">
+                <div class="p-2 bg-sky-50 rounded-lg text-sky-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-800">Add Supplier Quote</h3>
+                    <p class="text-xs text-slate-500">Submit a competitive bid for evaluation</p>
+                </div>
+            </div>
+
+            <form action="{{ url_for('create_quote_action', rfq_id=rfq.id) }}" method="POST" class="mt-4 space-y-4" id="quoteForm">
+                <!-- Supplier Name -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">Supplier Name *</label>
+                    <input type="text" name="supplier_name" required placeholder="e.g. AeroDynamics Spares Inc." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+
+                <!-- Unit Price (INR) -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">Unit Price (INR ₹) *</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-bold">₹</span>
+                        <input type="number" name="unit_price" id="quoteUnitPrice" step="0.01" min="0.01" required placeholder="0.00" class="w-full pl-8 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+                    </div>
+                    <span class="text-[11px] text-slate-400">Price per unit in Indian Rupees (INR)</span>
+                </div>
+
+                <!-- Lead Time (Days) -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">Lead Time (Calendar Days) *</label>
+                    <input type="number" name="lead_time_days" id="quoteLeadTime" min="0" step="1" required placeholder="e.g. 7" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono">
+                    <span class="text-[11px] text-slate-400">Days from today to estimated delivery</span>
+                </div>
+
+                <!-- Valid Until Date -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">Quote Valid Until *</label>
+                    <input type="date" name="valid_until" required value="{{ today }}" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                </div>
+
+                <!-- Live Dynamic Calculation Card -->
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-xs space-y-1.5" id="liveQuoteSummary">
+                    <div class="flex justify-between items-center text-slate-600">
+                        <span>Computed Total Price:</span>
+                        <span class="font-bold text-slate-900 font-mono text-sm" id="liveTotalPrice">₹ 0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-600">
+                        <span>Estimated Arrival:</span>
+                        <span class="font-medium text-slate-800" id="liveArrivalDate">—</span>
+                    </div>
+                    <div id="liveDeadlineNotice" class="text-[11px] pt-1 border-t border-slate-200 font-medium hidden">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full py-2.5 px-4 text-sm font-semibold rounded-lg text-white bg-sky-600 hover:bg-sky-500 shadow-sm hover:shadow transition focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    Add Supplier Quote
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Pass RFQ parameters to JS for live calculation -->
+<script>
+    window.RFQ_DATA = {
+        quantity: {{ rfq.quantity }},
+        neededBy: "{{ rfq.needed_by }}",
+        today: "{{ today }}"
+    };
+</script>
+{% endblock %}
